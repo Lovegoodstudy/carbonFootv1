@@ -2,9 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>Result</title>
+    <link rel="stylesheet" href="./bootstrap-3.3.7-dist/css/bootstrap.css" />
+    <script src="./jquery-3.2.1.js"></script>
+    <script src="./bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script>
+        let typeArr = [];
+        let itemArr = [];
+        let userArr = [];
+        let carbonFootArr = [];
+
+        $.ajax({
+            url: 'http://119.29.101.205:8081/type',
+            type : 'get',
+            async : false,
+            success : function (data) {
+                typeArr = data;
+            }
+        });
+
+        $.ajax({
+            url: 'http://119.29.101.205:8081/item',
+            type : 'get',
+            async : false,
+            success : function (data) {
+                itemArr = data;
+            }
+        });
+
+        $.ajax({
+            url: 'http://119.29.101.205:8081/user',
+            type : 'get',
+            async : false,
+            success : function (data) {
+                userArr = data;
+            }
+        });
+
+        $.ajax({
+            url: 'http://119.29.101.205:8081/carbonInfo',
+            type : 'get',
+            async : false,
+            success : function (data) {
+                carbonFootArr = data;
+            }
+        });
+
+        $(document).ready(function () {
+            for (let user of userArr) {
+                $('#container').append(`
+<div class="row" id="carbonFootTable">
+    <table class="table table-hover">
+        <caption>${user.username}的碳足迹</caption>
+        <thead>
+            <tr>
+                <th><p>#</p></th>
+                <th><p>物品</p></th>
+                <th><p>数量</p></th>
+                <th><p>碳排放量</p></th>
+            </tr>
+        </thead>
+        <tbody id="infoTable${user.id}">
+        </tbody>
+    </table>
+    <div id="carbonTableAmount${user.id}"></div>
+</div>`);
+                let userCarbonAmount = 0;
+                for (let carbonInfo of carbonFootArr) {
+                    if (carbonInfo.userId === user.id) {
+                        for (let item of itemArr) {
+                            if (item.id === carbonInfo.itemId) {
+                                userCarbonAmount += carbonInfo.amount*item.carbonFoot;
+                                $(`#infoTable${user.id}`).append(`
+<tr>
+<th></th>
+<th><p>${item.name}</p></th>
+<th><p>${carbonInfo.amount}${item.unit}</p></th>
+<th><p>${carbonInfo.amount*item.carbonFoot}</p></th>
+</tr>`);
+                                break;
+                            }
+                        }
+                    }
+                }
+                $(`#carbonTableAmount${user.id}`).append(`
+<p><b>总碳排放量：${userCarbonAmount.toFixed(3)}</b></p>
+`);
+            }
+        })
+    </script>
 </head>
 <body>
-$END$
+    <div class="container" id="container">
+        <div class="row">
+            <h1>数据查看</h1>
+        </div>
+    </div>
 </body>
 </html>

@@ -84,21 +84,25 @@
                 if (username !== '') {
                     let carbonFootList = getCarbonFootData();
                     let amount = getCarbonAmount();
-                    $.ajax({
-                        url : 'http://119.29.101.205:8081/data',
-                        type : 'post',
-                        data : {
-                            carbonFootList : carbonFootList,
-                            amount : amount,
-                            username : username
-                        },
-                        success : function () {
-                            alert('提交信息成功，请勿重复提交！')
-                        },
-                        error : function () {
-                            alert('提交信息失败，请重试。如仍有问题请联系管理员。')
-                        }
-                    })
+                    if (carbonFootList.length === 0) {
+                        alert('提交数据为空！请检查数据！')
+                    } else {
+                        $.ajax({
+                            url : 'http://119.29.101.205:8081/data',
+                            type : 'post',
+                            data : {
+                                carbonFootList : carbonFootList,
+                                amount : amount,
+                                username : username
+                            },
+                            success : function () {
+                                alert('提交信息成功，请勿重复提交！')
+                            },
+                            error : function () {
+                                alert('提交信息失败，请重试。如仍有问题请联系管理员。')
+                            }
+                        })
+                    }
                 } else {
                     alert('姓名不能为空！')
                 }

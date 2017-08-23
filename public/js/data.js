@@ -4,18 +4,18 @@ let itemArr = [];
 $.ajax({
     url: 'http://119.29.101.205:8081/type',
     type : 'get',
+    async : false,
     success : function (data) {
         typeArr = data;
-        console.log(typeArr);
     }
 });
 
 $.ajax({
     url: 'http://119.29.101.205:8081/item',
     type : 'get',
+    async : false,
     success : function (data) {
         itemArr = data;
-        console.log(itemArr);
     }
 });
 
