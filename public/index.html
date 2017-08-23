@@ -96,7 +96,8 @@
                                 username : username
                             },
                             success : function () {
-                                alert('提交信息成功，请勿重复提交！')
+                                alert('提交信息成功，请勿重复提交！');
+                                storageInit();
                             },
                             error : function () {
                                 alert('提交信息失败，请重试。如仍有问题请联系管理员。')
