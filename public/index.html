@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>碳足迹</title>
+    <link rel="stylesheet" href="./bootstrap-3.3.7-dist/css/bootstrap.css" />
+    <script src="./jquery-3.2.1.js"></script>
+    <script src="./bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/storage.js"></script>
+    <script>
+        var id;
+        let data = JSON.parse(localStorage.getItem('carbonFootList'));
+        if (data) {
+            if (data.length === 0){
+                id = 0;
+            } else {
+                id = data[data.length - 1].id;
+            }
+        } else {
+            storageInit();
+        }
+        function drawTable() {
+            $('#infoTable').empty();
+            $('#carbonTableAmount').empty();
+            let carbonFootList = getCarbonFootData();
+            let amount = getCarbonAmount();
+            for (let carbonFoot of carbonFootList) {
+                $('#infoTable').append(`
+<tr>
+<th></th>
+<th><p>${carbonFoot.item.name}</p></th>
+<th><p>${carbonFoot.amount}${carbonFoot.item.unit}</p></th>
+<th><p>${carbonFoot.carbonAmount}</p></th>
+<th><button class="btn btn-danger" onclick="deleteCarbonFoot(${carbonFoot.id});drawTable();">删除</input></th>
+</tr>`);
+            }
+            $('#carbonTableAmount').append(`
+<p><b>总碳排放量：${amount.toFixed(3)}</b></p>
+`);
+        }
+        $(document).ready(function () {
+            drawTable();
+            let typeArr = getTypeArrData();
+            for (let type of typeArr) {
+                $('#typeSelect').append(`<option value='Value'>${type.name}</option>`);
+            }
+            let type = getTypeByName($('#typeSelect').children('option:selected').text());
+            let itemArr = getItemArrData(type);
+            for (let item of itemArr) {
+                $('#itemSelect').append(`<option value='Value'>${item.name}</option>`);
+            }
+            let item = getItemByName($('#itemSelect').children('option:selected').text());
+            $('#itemUnit').text(item.unit);
+            $('#typeSelect').change(function () {
+                $('#itemSelect').empty();
+                let type = getTypeByName($('#typeSelect').children('option:selected').text());
+                let itemArr = getItemArrData(type);
+                for (let item of itemArr) {
+                    $('#itemSelect').append(`<option value='Value'>${item.name}</option>`);
+                }
+                let item = getItemByName($('#itemSelect').children('option:selected').text());
+                $('#itemUnit').text(item.unit);
+            });
+            $('#itemSelect').change(function () {
+                let item = getItemByName($('#itemSelect').children('option:selected').text());
+                $('#itemUnit').text(item.unit);
+            });
+            $('#itemAmount').keyup(function () {
+                let item = getItemByName($('#itemSelect').children('option:selected').text());
+                $('#carbonAmount').val(item.carbonFoot * Number($(this).val()));
+            });
+            $('#addButton').click(function () {
+                let carbonFoot = {};
+                carbonFoot.item = getItemByName($('#itemSelect').children('option:selected').text());
+                carbonFoot.amount = Number($('#itemAmount').val());
+                $('#carbonAmount').val(carbonFoot.item.carbonFoot * Number($('#itemAmount').val()));
+                carbonFoot.carbonAmount = Number($('#carbonAmount').val());
+                addCarbonFoot(carbonFoot);
+                drawTable();
+            });
+            $('#submitButton').click(function () {
+                let username = $("#username").val();
+                if (username !== '') {
+                    let carbonFootList = getCarbonFootData();
+                    let amount = getCarbonAmount();
+                    $.ajax({
+                        url : 'http://119.29.101.205:8081/data',
+                        type : 'post',
+                        data : {
+                            carbonFootList : carbonFootList,
+                            amount : amount,
+                            username : username
+                        },
+                        success : function () {
+                            alert('提交信息成功，请勿重复提交！')
+                        },
+                        error : function () {
+                            alert('提交信息失败，请重试。如仍有问题请联系管理员。')
+                        }
+                    })
+                } else {
+                    alert('姓名不能为空！')
+                }
+            })
+        })
+    </script>
+</head>
+<body>
+    <div class="container" id="indexContainer">
+        <div class="row" style="text-align: center">
+            <h1>碳足迹统计系统</h1>
+        </div>
+        <div class="row">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#myModal">添加一条碳足迹</button>
+        </div>
+        <div class="row" id="carbonFootTable">
+            <table class="table table-hover">
+                <caption>我的碳足迹</caption>
+                <thead>
+                <tr>
+                    <th><p>#</p></th>
+                    <th><p>物品</p></th>
+                    <th><p>数量</p></th>
+                    <th><p>碳排放量</p></th>
+                </tr>
+                </thead>
+                <tbody id="infoTable">
+                </tbody>
+            </table>
+            <div id="carbonTableAmount"></div>
+        </div>
+        <div class="row">
+            <label>姓名：<input type="text" id="username"></label>
+            <button class="btn btn-default" id="submitButton">提交我的碳足迹</button>
+        </div>
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">添加碳足迹</h4>
+                    </div>
+                    <div class="modal-body" style="padding-left: 10%">
+                        <div class="row">
+                            <label style="width: 40%">
+                                <p>种类：</p>
+                                <select class="form-control" id="typeSelect"></select>
+                            </label>
+                            <label style="width: 50%">
+                                <p>物品：</p>
+                                <select class="form-control" id="itemSelect"></select>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label style="width: 90%">
+                                <p>数量：</p>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" placeholder="Amount" min="0" id="itemAmount">
+                                    <div class="input-group-addon" id="itemUnit"></div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label style="width: 90%">
+                                <p>碳排放量：</p>
+                                <div class="input-group">
+                                    <input type="number" class="disabled form-control" min="0" id="carbonAmount" readonly="readonly">
+                                    <div class="input-group-addon">kg</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addButton">添加</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+    </div>
+</body>
+</html>
